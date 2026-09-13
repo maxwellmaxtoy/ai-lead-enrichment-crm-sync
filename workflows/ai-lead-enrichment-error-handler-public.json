@@ -1,0 +1,155 @@
+{
+  "name": "AI Lead Enrichment - Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        0
+      ],
+      "id": "a7fad059-74fb-4635-bcd3-6d381a1c7aa9",
+      "name": "Workflow Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\n\n\n// =========================================\n// ERROR TRIGGER SECTIONS\n// =========================================\n\nconst execution =\n  data.execution &&\n  typeof data.execution === 'object'\n    ? data.execution\n    : {};\n\nconst workflow =\n  data.workflow &&\n  typeof data.workflow === 'object'\n    ? data.workflow\n    : {};\n\nconst error =\n  execution.error &&\n  typeof execution.error === 'object'\n    ? execution.error\n    : (\n        data.error &&\n        typeof data.error === 'object'\n          ? data.error\n          : {}\n      );\n\n\n// =========================================\n// WORKFLOW DETAILS\n// =========================================\n\nconst workflowId =\n  String(\n    workflow.id ||\n    data.workflowId ||\n    ''\n  ).trim();\n\nconst workflowName =\n  String(\n    workflow.name ||\n    data.workflowName ||\n    'Unknown Workflow'\n  ).trim();\n\n\n// =========================================\n// EXECUTION DETAILS\n// =========================================\n\nconst executionId =\n  String(\n    execution.id ||\n    data.executionId ||\n    ''\n  ).trim();\n\nconst executionUrl =\n  String(\n    execution.url ||\n    data.executionUrl ||\n    ''\n  ).trim();\n\nconst executionMode =\n  String(\n    execution.mode ||\n    data.mode ||\n    'unknown'\n  ).trim();\n\nconst lastNodeExecuted =\n  String(\n    execution.lastNodeExecuted ||\n    data.lastNodeExecuted ||\n    'Unknown Node'\n  ).trim();\n\n\n// =========================================\n// ERROR DETAILS\n// =========================================\n\nconst errorMessage =\n  String(\n    error.message ||\n    data.errorMessage ||\n    data.message ||\n    'Unknown workflow error'\n  ).trim();\n\nconst errorName =\n  String(\n    error.name ||\n    data.errorName ||\n    'WorkflowError'\n  ).trim();\n\nconst errorStack =\n  String(\n    error.stack ||\n    data.stack ||\n    ''\n  ).trim();\n\n\n// =========================================\n// RETRY DETAILS\n// =========================================\n\nconst retryOf =\n  execution.retryOf !== undefined &&\n  execution.retryOf !== null\n    ? String(execution.retryOf)\n    : null;\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    event_type:\n      'WORKFLOW_ERROR',\n\n    workflow_id:\n      workflowId || null,\n\n    workflow_name:\n      workflowName,\n\n    execution_id:\n      executionId || null,\n\n    execution_url:\n      executionUrl || null,\n\n    execution_mode:\n      executionMode,\n\n    last_node_executed:\n      lastNodeExecuted,\n\n    error_name:\n      errorName,\n\n    error_message:\n      errorMessage,\n\n    error_stack:\n      errorStack || null,\n\n    retry_of:\n      retryOf,\n\n    occurred_at:\n      $now.toISO()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        0
+      ],
+      "id": "6f5ce5bb-e3fc-4d51-a834-31b102d6d622",
+      "name": "Normalize Workflow Error"
+    },
+    {
+      "parameters": {
+        "tableId": "workflow_errors",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "={{ $json.event_type }}"
+            },
+            {
+              "fieldId": "workflow_id",
+              "fieldValue": "={{ $json.workflow_id }}"
+            },
+            {
+              "fieldId": "workflow_name",
+              "fieldValue": "={{ $json.workflow_name }}"
+            },
+            {
+              "fieldId": "execution_id",
+              "fieldValue": "={{ $json.execution_id }}"
+            },
+            {
+              "fieldId": "execution_url",
+              "fieldValue": "={{ $json.execution_url }}"
+            },
+            {
+              "fieldId": "execution_mode",
+              "fieldValue": "={{ $json.execution_mode }}"
+            },
+            {
+              "fieldId": "last_node_executed",
+              "fieldValue": "={{ $json.last_node_executed }}"
+            },
+            {
+              "fieldId": "error_name",
+              "fieldValue": "={{ $json.error_name }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json.error_message }}"
+            },
+            {
+              "fieldId": "error_stack",
+              "fieldValue": "={{ $json.error_stack }}"
+            },
+            {
+              "fieldId": "retry_of",
+              "fieldValue": "={{ $json.retry_of }}"
+            },
+            {
+              "fieldId": "occurred_at",
+              "fieldValue": "={{ $json.occurred_at }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        288,
+        0
+      ],
+      "id": "603aa652-f0fe-428c-8d95-0438712f950d",
+      "name": "Log Workflow Error"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL@example.com",
+        "subject": "={{ `[WORKFLOW ERROR] ${$json.workflow_name} | ${$json.last_node_executed}` }}",
+        "emailType": "text",
+        "message": "={{ `UNEXPECTED WORKFLOW ERROR\n\nWorkflow:\n${$json.workflow_name}\n\nWorkflow ID:\n${$json.workflow_id || 'N/A'}\n\nExecution ID:\n${$json.execution_id || 'N/A'}\n\nExecution Mode:\n${$json.execution_mode || 'N/A'}\n\nLast Node Executed:\n${$json.last_node_executed || 'Unknown Node'}\n\nError Name:\n${$json.error_name || 'WorkflowError'}\n\nError Message:\n${$json.error_message || 'Unknown workflow error'}\n\nRetry Of:\n${$json.retry_of || 'N/A'}\n\nExecution URL:\n${$json.execution_url || 'N/A'}\n\nOccurred At:\n${$now.setZone('Asia/Manila').toFormat('MM/dd/yyyy hh:mm a')}\n\nAction Required:\nAn unexpected error terminated the AI Lead Enrichment & CRM Sync workflow.\n\nReview the failed execution in n8n and determine whether the lead needs to be retried manually.` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        0
+      ],
+      "id": "d8ba025f-d019-4b8c-92f6-9e82e5295538",
+      "name": "Send a message"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Workflow Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Workflow Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Log Workflow Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": [],
+  "tags": []
+}

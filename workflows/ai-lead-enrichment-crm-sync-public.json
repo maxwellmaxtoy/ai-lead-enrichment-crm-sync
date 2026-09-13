@@ -1,0 +1,1927 @@
+{
+  "name": "AI Lead Enrichment & CRM Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -112
+      ],
+      "id": "f48bbf87-29ee-4197-97fc-e77f0088df93",
+      "name": "Test Run"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5e41562e-98ca-46fe-8a32-67a0fe130adc",
+              "name": "run_mode",
+              "value": "TEST",
+              "type": "string"
+            },
+            {
+              "id": "9a532b97-a9ff-4c82-9a9a-987417089703",
+              "name": "lead_score_threshold",
+              "value": 70,
+              "type": "number"
+            },
+            {
+              "id": "c228f5c6-43fb-450b-a883-5b8fbfc64517",
+              "name": "ai_confidence_threshold",
+              "value": 0.75,
+              "type": "number"
+            },
+            {
+              "id": "5e627923-5962-4852-96e6-1f02044bce15",
+              "name": "source",
+              "value": "PORTFOLIO_TEST",
+              "type": "string"
+            },
+            {
+              "id": "fea349f0-9895-4e57-b6f2-8085751f20d4",
+              "name": "workflow_version",
+              "value": "1.0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        -112
+      ],
+      "id": "52403f23-1aee-4ee8-a533-5ce44f2b001f",
+      "name": "Workflow Config"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34492ed2-3e96-4c34-baa5-ce3c1ea02517",
+              "name": "lead_id",
+              "value": "TEST-013",
+              "type": "string"
+            },
+            {
+              "id": "03eb7a57-a310-41e3-adc7-81cb44571f61",
+              "name": "first_name",
+              "value": "Daniel",
+              "type": "string"
+            },
+            {
+              "id": "a6111b4d-f555-498d-b730-2d8b5f9b24c9",
+              "name": "last_name",
+              "value": "Cruz",
+              "type": "string"
+            },
+            {
+              "id": "edbf7313-3d78-49e1-bea4-23ff005f1dc6",
+              "name": "email",
+              "value": "daniel.cruz13@example.org",
+              "type": "string"
+            },
+            {
+              "id": "23e2d5eb-6630-46c8-9e67-39169b211ac2",
+              "name": "company",
+              "value": "Visayas AI Failure Test",
+              "type": "string"
+            },
+            {
+              "id": "d64259d2-0490-49d3-9e62-3a3b4a1a8691",
+              "name": "website",
+              "value": "https://example.org",
+              "type": "string"
+            },
+            {
+              "id": "4e85062a-3a4c-4644-94a3-d1625337385a",
+              "name": "job_title",
+              "value": "Operations Manager",
+              "type": "string"
+            },
+            {
+              "id": "05da7421-f696-44dc-b595-d50e2615a767",
+              "name": "city",
+              "value": "Cebu City",
+              "type": "string"
+            },
+            {
+              "id": "6eff6d96-5fb0-409c-ab56-8328ab960ecf",
+              "name": "country",
+              "value": "Philippines",
+              "type": "string"
+            },
+            {
+              "id": "34f62b54-e79f-4f84-b6e0-98950cbe8e16",
+              "name": "lead_source",
+              "value": "MANUAL_TEST",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -112
+      ],
+      "id": "51f76131-ab06-4771-9175-0b80bda01085",
+      "name": "Create Test Lead"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $json;\n\nconst errors = [];\n\n\n// =========================================\n// REQUIRED FIELDS\n// =========================================\n\nconst requiredFields = [\n  'lead_id',\n  'first_name',\n  'last_name',\n  'email',\n  'company',\n  'website',\n  'job_title',\n  'city',\n  'country',\n  'lead_source'\n];\n\nfor (const field of requiredFields) {\n  const value = lead[field];\n\n  if (\n    value === undefined ||\n    value === null ||\n    String(value).trim() === ''\n  ) {\n    errors.push(`Missing required field: ${field}`);\n  }\n}\n\n\n// =========================================\n// EMAIL VALIDATION\n// =========================================\n\nconst normalizedEmail =\n  typeof lead.email === 'string'\n    ? lead.email.trim().toLowerCase()\n    : '';\n\nconst emailPattern =\n  /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nif (\n  normalizedEmail &&\n  !emailPattern.test(normalizedEmail)\n) {\n  errors.push('Invalid email format');\n}\n\n\n// =========================================\n// WEBSITE NORMALIZATION\n// =========================================\n\nconst normalizedWebsite =\n  typeof lead.website === 'string'\n    ? lead.website.trim()\n    : '';\n\n\n// =========================================\n// PRIVATE IPv4 CHECK\n// =========================================\n\nfunction isPrivateIPv4(hostname) {\n\n  const parts =\n    hostname\n      .split('.')\n      .map(Number);\n\n  if (\n    parts.length !== 4 ||\n    parts.some(\n      part =>\n        !Number.isInteger(part) ||\n        part < 0 ||\n        part > 255\n    )\n  ) {\n    return false;\n  }\n\n  const [a, b] = parts;\n\n  // 0.0.0.0/8\n  if (a === 0) {\n    return true;\n  }\n\n  // 10.0.0.0/8\n  if (a === 10) {\n    return true;\n  }\n\n  // 100.64.0.0/10\n  if (\n    a === 100 &&\n    b >= 64 &&\n    b <= 127\n  ) {\n    return true;\n  }\n\n  // 127.0.0.0/8\n  if (a === 127) {\n    return true;\n  }\n\n  // 169.254.0.0/16\n  if (\n    a === 169 &&\n    b === 254\n  ) {\n    return true;\n  }\n\n  // 172.16.0.0/12\n  if (\n    a === 172 &&\n    b >= 16 &&\n    b <= 31\n  ) {\n    return true;\n  }\n\n  // 192.168.0.0/16\n  if (\n    a === 192 &&\n    b === 168\n  ) {\n    return true;\n  }\n\n  // Multicast / reserved\n  if (a >= 224) {\n    return true;\n  }\n\n  return false;\n}\n\n\n// =========================================\n// PRIVATE IPv6 CHECK\n// =========================================\n\nfunction isPrivateIPv6(hostname) {\n\n  const host =\n    String(hostname || '')\n      .replace(/^\\[/, '')\n      .replace(/\\]$/, '')\n      .toLowerCase();\n\n  if (\n    host === '::1' ||\n    host === '::'\n  ) {\n    return true;\n  }\n\n  // fc00::/7\n  if (\n    host.startsWith('fc') ||\n    host.startsWith('fd')\n  ) {\n    return true;\n  }\n\n  // fe80::/10\n  if (\n    host.startsWith('fe8') ||\n    host.startsWith('fe9') ||\n    host.startsWith('fea') ||\n    host.startsWith('feb')\n  ) {\n    return true;\n  }\n\n  return false;\n}\n\n\n// =========================================\n// WEBSITE SAFETY VALIDATION\n// =========================================\n\nif (normalizedWebsite) {\n\n  const protocolMatch =\n    normalizedWebsite.match(\n      /^(https?):\\/\\/(.+)$/i\n    );\n\n  if (!protocolMatch) {\n\n    errors.push(\n      'Website must use HTTP or HTTPS'\n    );\n\n  }\n\n  else {\n\n    const remainder =\n      protocolMatch[2];\n\n    const authority =\n      remainder.split(/[/?#]/)[0];\n\n    // Block embedded credentials\n    if (authority.includes('@')) {\n      errors.push(\n        'Website URL must not contain credentials'\n      );\n    }\n\n    let hostname = '';\n    let port = '';\n\n    // IPv6 address\n    if (authority.startsWith('[')) {\n\n      const closingBracket =\n        authority.indexOf(']');\n\n      if (closingBracket === -1) {\n\n        errors.push(\n          'Invalid website URL'\n        );\n\n      }\n\n      else {\n\n        hostname =\n          authority\n            .slice(\n              1,\n              closingBracket\n            )\n            .toLowerCase();\n\n        const afterBracket =\n          authority.slice(\n            closingBracket + 1\n          );\n\n        if (\n          afterBracket.startsWith(':')\n        ) {\n          port =\n            afterBracket.slice(1);\n        }\n\n      }\n\n    }\n\n    else {\n\n      const cleanAuthority =\n        authority.includes('@')\n          ? authority.split('@').pop()\n          : authority;\n\n      const colonIndex =\n        cleanAuthority.lastIndexOf(':');\n\n      if (\n        colonIndex > -1 &&\n        cleanAuthority.indexOf(':') === colonIndex\n      ) {\n\n        hostname =\n          cleanAuthority\n            .slice(0, colonIndex)\n            .toLowerCase();\n\n        port =\n          cleanAuthority\n            .slice(colonIndex + 1);\n\n      }\n\n      else {\n\n        hostname =\n          cleanAuthority\n            .toLowerCase();\n\n      }\n\n    }\n\n\n    // =====================================\n    // HOSTNAME CHECK\n    // =====================================\n\n    if (!hostname) {\n\n      errors.push(\n        'Invalid website URL'\n      );\n\n    }\n\n    else {\n\n      // localhost / local domains\n      if (\n        hostname === 'localhost' ||\n        hostname.endsWith('.localhost') ||\n        hostname.endsWith('.local')\n      ) {\n\n        errors.push(\n          'Private or local website URLs are not allowed'\n        );\n\n      }\n\n      // Private IPv4\n      else if (\n        isPrivateIPv4(hostname)\n      ) {\n\n        errors.push(\n          'Private or local website URLs are not allowed'\n        );\n\n      }\n\n      // Private IPv6\n      else if (\n        hostname.includes(':') &&\n        isPrivateIPv6(hostname)\n      ) {\n\n        errors.push(\n          'Private or local website URLs are not allowed'\n        );\n\n      }\n\n    }\n\n\n    // =====================================\n    // PORT CHECK\n    // =====================================\n\n    if (\n      port &&\n      port !== '80' &&\n      port !== '443'\n    ) {\n\n      errors.push(\n        'Website URL uses an unsupported port'\n      );\n\n    }\n\n  }\n\n}\n\n\n// =========================================\n// FINAL STATUS\n// =========================================\n\nconst isValid =\n  errors.length === 0;\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    email:\n      normalizedEmail,\n\n    website:\n      normalizedWebsite,\n\n    is_valid:\n      isValid,\n\n    validation_status:\n      isValid\n        ? 'VALID'\n        : 'INVALID',\n\n    validation_errors:\n      errors\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        32
+      ],
+      "id": "d708133d-66c1-4d06-8220-c08a111b9ff7",
+      "name": "Validate Lead Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "29baf69a-9336-494b-a605-4517a8348628",
+              "leftValue": "={{$json.is_valid}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        656,
+        32
+      ],
+      "id": "6e709e97-92a9-4411-b0e3-9b65c16342d2",
+      "name": "Is Lead Valid?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $json;\n\n\n// =========================================\n// RUN MODE\n// =========================================\n\nconst runMode =\n  String(lead.run_mode || 'PRODUCTION')\n    .trim()\n    .toUpperCase();\n\n\n// =========================================\n// NORMALIZE LEAD ID\n// =========================================\n\nconst normalizedLeadId =\n  String(lead.lead_id || '')\n    .trim()\n    .toLowerCase();\n\n\n// =========================================\n// NORMALIZE EMAIL\n// =========================================\n\nconst normalizedEmail =\n  String(lead.email || '')\n    .trim()\n    .toLowerCase();\n\n\n// =========================================\n// NORMALIZE COMPANY\n// =========================================\n\nconst normalizedCompany =\n  String(lead.company || '')\n    .trim()\n    .toLowerCase()\n    .replace(/\\s+/g, ' ');\n\n\n// =========================================\n// NORMALIZE WEBSITE\n// =========================================\n\nconst normalizedWebsite =\n  String(lead.website || '')\n    .trim()\n    .toLowerCase()\n    .replace(/^https?:\\/\\//, '')\n    .replace(/^www\\./, '')\n    .replace(/\\/+$/, '');\n\n\n// =========================================\n// BUILD ENVIRONMENT-SAFE DEDUPE KEYS\n// =========================================\n\n// Example:\n// TEST|web-test-001\n\nconst leadIdDedupeKey =\n  normalizedLeadId\n    ? `${runMode}|${normalizedLeadId}`\n    : null;\n\n\n// Example:\n// TEST|james@example.com\n\nconst emailDedupeKey =\n  normalizedEmail\n    ? `${runMode}|${normalizedEmail}`\n    : null;\n\n\n// Example:\n// TEST|visayas growth systems|example.org\n\nconst companyWebsiteDedupeKey =\n  normalizedCompany && normalizedWebsite\n    ? `${runMode}|${normalizedCompany}|${normalizedWebsite}`\n    : null;\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    run_mode: runMode,\n\n    normalized_email:\n      normalizedEmail,\n\n    normalized_company:\n      normalizedCompany,\n\n    normalized_website:\n      normalizedWebsite,\n\n    lead_id_dedupe_key:\n      leadIdDedupeKey,\n\n    email_dedupe_key:\n      emailDedupeKey,\n\n    company_website_dedupe_key:\n      companyWebsiteDedupeKey\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -80
+      ],
+      "id": "ab245492-99af-4d27-9e7f-6e3e1f50fcbf",
+      "name": "Prepare Lead for Deduplication"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lookupResult = $json;\n\nconst lead =\n  $('Prepare Lead for Deduplication')\n    .first()\n    .json;\n\n\n// =========================================\n// DUPLICATE FOUND?\n// =========================================\n\nconst duplicateFound =\n  lookupResult.id !== undefined &&\n  lookupResult.id !== null;\n\n\n// =========================================\n// DETERMINE MATCH TYPE\n// =========================================\n\nlet duplicateMatchType = null;\n\nif (duplicateFound) {\n\n  if (\n    lookupResult.lead_id_dedupe_key &&\n    lookupResult.lead_id_dedupe_key ===\n      lead.lead_id_dedupe_key\n  ) {\n    duplicateMatchType =\n      'LEAD_ID';\n  }\n\n  else if (\n    lookupResult.email_dedupe_key &&\n    lookupResult.email_dedupe_key ===\n      lead.email_dedupe_key\n  ) {\n    duplicateMatchType =\n      'EMAIL';\n  }\n\n  else if (\n    lookupResult.company_website_dedupe_key &&\n    lookupResult.company_website_dedupe_key ===\n      lead.company_website_dedupe_key\n  ) {\n    duplicateMatchType =\n      'COMPANY_WEBSITE';\n  }\n\n  else {\n    duplicateMatchType =\n      'UNKNOWN';\n  }\n\n}\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    duplicate_found:\n      duplicateFound,\n\n    duplicate_status:\n      duplicateFound\n        ? 'DUPLICATE'\n        : 'NEW_LEAD',\n\n    duplicate_match_type:\n      duplicateMatchType,\n\n    existing_lead_id:\n      duplicateFound\n        ? lookupResult.id\n        : null\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -80
+      ],
+      "id": "ad17b957-38d5-4161-9bf8-847e806aeaeb",
+      "name": "Evaluate Duplicate Result"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "973d80f4-f38b-4466-928d-1f27cc02c3d4",
+              "leftValue": "={{ $json.duplicate_found }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        -80
+      ],
+      "id": "a5b900db-14e4-4226-866e-c95f6c297343",
+      "name": "Is Duplicate?"
+    },
+    {
+      "parameters": {
+        "tableId": "leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "lead_id",
+              "fieldValue": "={{$json.lead_id}}"
+            },
+            {
+              "fieldId": "first_name",
+              "fieldValue": "={{$json.first_name}}"
+            },
+            {
+              "fieldId": "last_name",
+              "fieldValue": "={{$json.last_name}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{$json.email}}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{$json.company}}"
+            },
+            {
+              "fieldId": "website",
+              "fieldValue": "={{$json.website}}"
+            },
+            {
+              "fieldId": "job_title",
+              "fieldValue": "={{$json.job_title}}"
+            },
+            {
+              "fieldId": "city",
+              "fieldValue": "={{$json.city}}"
+            },
+            {
+              "fieldId": "country",
+              "fieldValue": "={{$json.country}}"
+            },
+            {
+              "fieldId": "lead_source",
+              "fieldValue": "={{$json.lead_source}}"
+            },
+            {
+              "fieldId": "normalized_email",
+              "fieldValue": "={{$json.normalized_email}}"
+            },
+            {
+              "fieldId": "normalized_website",
+              "fieldValue": "={{$json.normalized_website}}"
+            },
+            {
+              "fieldId": "email_dedupe_key",
+              "fieldValue": "={{$json.email_dedupe_key}}"
+            },
+            {
+              "fieldId": "company_website_dedupe_key",
+              "fieldValue": "={{$json.company_website_dedupe_key}}"
+            },
+            {
+              "fieldId": "qualification_status",
+              "fieldValue": "PENDING_ENRICHMENT"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{$json.run_mode}}"
+            },
+            {
+              "fieldId": "normalized_company",
+              "fieldValue": "={{$json.normalized_company}}"
+            },
+            {
+              "fieldId": "lead_id_dedupe_key",
+              "fieldValue": "={{$json.lead_id_dedupe_key}}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        32
+      ],
+      "id": "8c71e9d0-de88-4633-96ee-bfac7b83c629",
+      "name": "Create New Lead Record",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email_dedupe_key",
+              "condition": "eq",
+              "keyValue": "={{$json.email_dedupe_key}}"
+            },
+            {
+              "keyName": "company_website_dedupe_key",
+              "condition": "eq",
+              "keyValue": "={{$json.company_website_dedupe_key}}"
+            },
+            {
+              "keyName": "lead_id_dedupe_key",
+              "condition": "eq",
+              "keyValue": "={{$json.lead_id_dedupe_key}}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        -80
+      ],
+      "id": "8d6637d1-7ed9-45a1-8913-f69ce52dc839",
+      "name": "Check Existing Lead",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{$json.website}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "website_html"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2016,
+        -176
+      ],
+      "id": "27d80123-a30c-424d-84b5-9314f339b778",
+      "name": "Fetch Company Website",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $json;\n\n\n// =========================================\n// GET ORIGINAL VALIDATED LEAD\n// =========================================\n\nconst originalLead =\n  $('Prepare Lead for Deduplication')\n    .first()\n    .json;\n\n\n// =========================================\n// GET CREATED DATABASE RECORD\n// =========================================\n\nconst databaseLead =\n  $('Create New Lead Record')\n    .first()\n    .json;\n\n\n// =========================================\n// GET HTML\n// =========================================\n\nconst html =\n  String(\n    response.website_html || ''\n  );\n\n\n// =========================================\n// REMOVE SCRIPT + STYLE CONTENT\n// =========================================\n\nlet text = html\n  .replace(\n    /<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,\n    ' '\n  )\n  .replace(\n    /<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi,\n    ' '\n  );\n\n\n// =========================================\n// REMOVE HTML TAGS\n// =========================================\n\ntext = text.replace(\n  /<[^>]+>/g,\n  ' '\n);\n\n\n// =========================================\n// DECODE COMMON HTML ENTITIES\n// =========================================\n\ntext = text\n  .replace(/&nbsp;/gi, ' ')\n  .replace(/&amp;/gi, '&')\n  .replace(/&quot;/gi, '\"')\n  .replace(/&#39;/gi, \"'\")\n  .replace(/&lt;/gi, '<')\n  .replace(/&gt;/gi, '>');\n\n\n// =========================================\n// NORMALIZE WHITESPACE\n// =========================================\n\ntext = text\n  .replace(/\\s+/g, ' ')\n  .trim();\n\n\n// =========================================\n// LIMIT WEBSITE TEXT SIZE\n// =========================================\n\nconst websiteText =\n  text.slice(\n    0,\n    10000\n  );\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n\n    // Keep config + validation + dedupe fields\n    ...originalLead,\n\n    // Add database-generated fields such as\n    // id, created_at, updated_at\n    ...databaseLead,\n\n    website_fetch_status:\n      'SUCCESS',\n\n    website_text:\n      websiteText,\n\n    website_text_length:\n      websiteText.length\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        -288
+      ],
+      "id": "067baf2f-3e55-4dc1-a5e7-7db7f10b6eab",
+      "name": "Extract Website Text"
+    },
+    {
+      "parameters": {
+        "text": "={{$json.enrichment_context}}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n  \"industry\": \"Business Services\",\n  \"business_type\": \"B2B Service Provider\",\n  \"recommended_service\": \"Workflow Automation\",\n  \"ai_confidence\": 0.9\n}",
+        "options": {
+          "systemPromptTemplate": "You are a CRM lead enrichment system.\n\nAnalyze only the lead and company information provided in the input.\n\nReturn structured business enrichment data.\n\nRules:\n\n1. industry\nIdentify the company's primary industry using a concise category such as:\nBusiness Services, Healthcare, Dental, Real Estate, E-commerce, Technology, Professional Services, Financial Services, or another appropriate industry.\n\n2. business_type\nDescribe the business model using a concise category such as:\nB2B Service Provider, B2C Service Provider, Local Service Business, SaaS Company, E-commerce Business, Healthcare Provider, or another appropriate category.\n\n3. recommended_service\nChoose the single automation service that would most likely provide value to this business.\n\nPrefer one of:\n- Workflow Automation\n- CRM Automation\n- Lead Management Automation\n- Customer Support Automation\n- AI Receptionist\n- Reporting Automation\n- Appointment Automation\n- Manual Review\n\n4. ai_confidence\nReturn a number from 0 to 1 representing confidence in the enrichment.\n\nExamples:\n0.95 = very strong evidence\n0.80 = good evidence\n0.60 = limited evidence\n0.30 = weak evidence\n\nDo not invent facts that are not supported by the provided company information.\n\nIf the available information is insufficient, use conservative classifications and lower the ai_confidence score.\n\nReturn only the requested structured fields."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        2608,
+        -288
+      ],
+      "id": "2d6f3163-d86a-406a-b7f6-9140c4130146",
+      "name": "AI Enrich Lead",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $json;\n\n\n// =========================================\n// TEST FIXTURE: HIGH-VALUE BUSINESS\n// =========================================\n\nconst highValueCompanyProfile = `\nVisayas Growth Systems is a Cebu City-based business services company.\n\nThe company helps small and medium-sized businesses improve their\noperations using workflow automation, CRM systems, lead management,\ncustomer support processes, reporting, and administrative automation.\n\nIts services include:\n- Workflow automation\n- CRM setup and optimization\n- Lead management\n- Customer support automation\n- Business process consulting\n- Reporting automation\n\nThe company primarily serves local service-based businesses in the\nPhilippines and works directly with business owners and operations teams.\n`;\n\n\n// =========================================\n// TEST FIXTURE: LOW-VALUE BUSINESS\n// =========================================\n\nconst lowValueCompanyProfile = `\nCebu Hobby Notes is a small personal hobby website maintained by\nindividual contributors.\n\nThe website publishes informal articles about hobbies, personal\ninterests, watercolor painting, journaling, and creative activities.\n\nIt is not operated as a commercial business.\n\nIt does not sell products or professional services.\n\nIt does not have a sales team, CRM process, appointment system,\ncustomer support department, or business operations team.\n\nThe website is mainly used for personal publishing and sharing\nnon-commercial hobby content.\n`;\n\n\n// =========================================\n// TEST FIXTURE: LOW-CONFIDENCE LEAD\n// =========================================\n\nconst lowConfidenceCompanyProfile = `\nVery limited information is available about this organization.\n\nThe available page does not clearly explain what the company does,\nwho it serves, whether it is commercial, or what operational systems\nit currently uses.\n\nThere is not enough reliable evidence to confidently determine its\nindustry, business model, or automation needs.\n`;\n\n\n// =========================================\n// GENERIC TEST FIXTURE\n// =========================================\n\nconst genericTestProfile = `\nThis is a controlled test record.\n\nThe available website does not contain reliable real-world company\ninformation.\n\nUse conservative classifications.\n\nIf there is not enough evidence to determine business intent or\nautomation needs, recommend Manual Review and lower the confidence score.\n`;\n\n\n// =========================================\n// DETERMINE ENRICHMENT SOURCE\n// =========================================\n\nlet enrichmentSource;\nlet companyContext;\n\n\n// HIGH-VALUE TEST LEADS\n\nif (\n  lead.run_mode === 'TEST' &&\n  (\n    lead.lead_id === 'TEST-002' ||\n    lead.lead_id === 'TEST-006'\n  )\n) {\n\n  enrichmentSource =\n    'TEST_FIXTURE_HIGH_VALUE';\n\n  companyContext =\n    highValueCompanyProfile.trim();\n\n}\n\n\n// LOW-VALUE TEST LEADS\n\nelse if (\n  lead.run_mode === 'TEST' &&\n  (\n    lead.lead_id === 'TEST-003' ||\n    lead.lead_id === 'TEST-007'\n  )\n) {\n\n  enrichmentSource =\n    'TEST_FIXTURE_LOW_VALUE';\n\n  companyContext =\n    lowValueCompanyProfile.trim();\n\n}\n\n\n// LOW-CONFIDENCE TEST LEAD\n\nelse if (\n  lead.run_mode === 'TEST' &&\n  lead.lead_id === 'TEST-004'\n) {\n\n  enrichmentSource =\n    'TEST_FIXTURE_LOW_CONFIDENCE';\n\n  companyContext =\n    lowConfidenceCompanyProfile.trim();\n\n}\n\n\n// GENERIC TEST DOMAINS\n\nelse if (\n  lead.run_mode === 'TEST' &&\n  (\n    lead.normalized_website === 'example.com' ||\n    lead.normalized_website === 'example.org' ||\n    lead.normalized_website === 'example.net' ||\n    lead.normalized_website === 'example.edu'\n  )\n) {\n\n  enrichmentSource =\n    'TEST_FIXTURE_GENERIC';\n\n  companyContext =\n    genericTestProfile.trim();\n\n}\n\n\n// PRODUCTION / REAL WEBSITE\n\nelse {\n\n  enrichmentSource =\n    'LIVE_WEBSITE';\n\n  companyContext =\n    String(\n      lead.website_text || ''\n    ).trim();\n\n}\n\n\n// =========================================\n// BUILD AI INPUT\n// =========================================\n\nconst enrichmentContext = `\nLEAD INFORMATION\n\nFirst Name: ${lead.first_name}\nLast Name: ${lead.last_name}\nJob Title: ${lead.job_title}\nCompany: ${lead.company}\nCity: ${lead.city}\nCountry: ${lead.country}\nWebsite: ${lead.website}\n\nCOMPANY INFORMATION\n\n${companyContext}\n`.trim();\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    enrichment_source:\n      enrichmentSource,\n\n    company_context:\n      companyContext,\n\n    enrichment_context:\n      enrichmentContext\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2416,
+        -288
+      ],
+      "id": "f555ced9-960a-46da-8ae0-014d66353cc8",
+      "name": "Prepare Enrichment Context"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResult = $json.output || {};\n\nconst lead =\n  $('Prepare Enrichment Context')\n    .first()\n    .json;\n\n\n// =========================================\n// NORMALIZE AI FIELDS\n// =========================================\n\nconst industry =\n  String(\n    aiResult.industry || 'Unknown'\n  ).trim();\n\n\nconst businessType =\n  String(\n    aiResult.business_type || 'Unknown'\n  ).trim();\n\n\nconst recommendedService =\n  String(\n    aiResult.recommended_service || 'Manual Review'\n  ).trim();\n\n\nlet aiConfidence =\n  Number(\n    aiResult.ai_confidence\n  );\n\n\nif (\n  !Number.isFinite(aiConfidence)\n) {\n  aiConfidence = 0;\n}\n\n\naiConfidence =\n  Math.max(\n    0,\n    Math.min(\n      1,\n      aiConfidence\n    )\n  );\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    industry:\n      industry,\n\n    business_type:\n      businessType,\n\n    recommended_service:\n      recommendedService,\n\n    ai_confidence:\n      aiConfidence,\n\n    enrichment_status:\n      'AI_ENRICHED'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2992,
+        -384
+      ],
+      "id": "511a4492-bd29-4556-8100-c621c185427b",
+      "name": "Normalize AI Enrichment"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c3ee1c1-413c-439d-be9c-b0373a74b294",
+              "leftValue": "={{$json.ai_confidence}}",
+              "rightValue": "={{ $json.ai_confidence_threshold }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3200,
+        -384
+      ],
+      "id": "1b798a82-5238-4678-b073-881bb237fc91",
+      "name": "Is AI Confidence Sufficient?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $json;\n\n\n// =========================================\n// CONFIG\n// =========================================\n\nconst leadScoreThreshold =\n  Number(lead.lead_score_threshold || 70);\n\n\n// =========================================\n// NORMALIZED VALUES\n// =========================================\n\nconst jobTitle =\n  String(lead.job_title || '')\n    .trim()\n    .toLowerCase();\n\nconst industry =\n  String(lead.industry || '')\n    .trim()\n    .toLowerCase();\n\nconst businessType =\n  String(lead.business_type || '')\n    .trim()\n    .toLowerCase();\n\nconst recommendedService =\n  String(lead.recommended_service || '')\n    .trim()\n    .toLowerCase();\n\nconst aiConfidence =\n  Number(lead.ai_confidence || 0);\n\n\n// =========================================\n// SCORE 1: VALID LEAD\n// MAX: 10\n// =========================================\n\nlet validLeadScore = 0;\n\nif (lead.is_valid === true) {\n  validLeadScore = 10;\n}\n\n\n// =========================================\n// SCORE 2: JOB TITLE\n// MAX: 20\n// =========================================\n\nlet jobTitleScore = 0;\n\nconst highValueTitles = [\n  'owner',\n  'founder',\n  'ceo',\n  'president',\n  'director',\n  'operations manager',\n  'general manager',\n  'clinic manager'\n];\n\nconst mediumValueTitles = [\n  'manager',\n  'operations',\n  'marketing',\n  'sales'\n];\n\nif (\n  highValueTitles.some(\n    title => jobTitle.includes(title)\n  )\n) {\n  jobTitleScore = 20;\n}\n\nelse if (\n  mediumValueTitles.some(\n    title => jobTitle.includes(title)\n  )\n) {\n  jobTitleScore = 10;\n}\n\n\n// =========================================\n// SCORE 3: BUSINESS TYPE\n// MAX: 15\n// =========================================\n\nlet businessTypeScore = 0;\n\nconst targetBusinessTypes = [\n  'b2b service provider',\n  'b2c service provider',\n  'local service business',\n  'healthcare provider',\n  'saas company'\n];\n\nif (\n  targetBusinessTypes.includes(businessType)\n) {\n  businessTypeScore = 15;\n}\n\n\n// =========================================\n// SCORE 4: INDUSTRY\n// MAX: 15\n// =========================================\n\nlet industryScore = 0;\n\nconst targetIndustries = [\n  'business services',\n  'healthcare',\n  'dental',\n  'real estate',\n  'technology',\n  'professional services',\n  'e-commerce'\n];\n\nif (\n  targetIndustries.includes(industry)\n) {\n  industryScore = 15;\n}\n\n\n// =========================================\n// SCORE 5: AUTOMATION OPPORTUNITY\n// MAX: 15\n// =========================================\n\nlet automationOpportunityScore = 0;\n\nif (\n  recommendedService &&\n  recommendedService !== 'manual review'\n) {\n  automationOpportunityScore = 15;\n}\n\n\n// =========================================\n// SCORE 6: WEBSITE FETCH\n// MAX: 10\n// =========================================\n\nlet websiteScore = 0;\n\nif (\n  lead.website_fetch_status === 'SUCCESS'\n) {\n  websiteScore = 10;\n}\n\n\n// =========================================\n// SCORE 7: AI CONFIDENCE\n// MAX: 15\n// =========================================\n\nlet aiConfidenceScore = 0;\n\nif (aiConfidence >= 0.90) {\n  aiConfidenceScore = 15;\n}\n\nelse if (aiConfidence >= 0.75) {\n  aiConfidenceScore = 10;\n}\n\n\n// =========================================\n// TOTAL SCORE\n// =========================================\n\nlet leadScore =\n  validLeadScore +\n  jobTitleScore +\n  businessTypeScore +\n  industryScore +\n  automationOpportunityScore +\n  websiteScore +\n  aiConfidenceScore;\n\nleadScore =\n  Math.min(\n    100,\n    Math.max(0, leadScore)\n  );\n\n\n// =========================================\n// PRIORITY\n// =========================================\n\nlet priority;\n\nif (leadScore >= 85) {\n  priority = 'HIGH';\n}\n\nelse if (leadScore >= 70) {\n  priority = 'MEDIUM';\n}\n\nelse {\n  priority = 'LOW';\n}\n\n\n// =========================================\n// QUALIFICATION PREVIEW\n// =========================================\n\nconst meetsScoreThreshold =\n  leadScore >= leadScoreThreshold;\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    lead_score: leadScore,\n\n    priority,\n\n    lead_score_threshold:\n      leadScoreThreshold,\n\n    meets_score_threshold:\n      meetsScoreThreshold,\n\n    scoring_status:\n      'SCORED',\n\n    score_breakdown: {\n      valid_lead: validLeadScore,\n      job_title: jobTitleScore,\n      business_type: businessTypeScore,\n      industry: industryScore,\n      automation_opportunity:\n        automationOpportunityScore,\n      website_fetch: websiteScore,\n      ai_confidence: aiConfidenceScore\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3424,
+        -576
+      ],
+      "id": "374157f3-192d-413c-a71f-253a35eb88a4",
+      "name": "Calculate Lead Score"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "69a0dc0e-7d00-424a-b820-1c55245b123d",
+              "leftValue": "={{$json.lead_score}}",
+              "rightValue": "={{$json.lead_score_threshold}}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3632,
+        -576
+      ],
+      "id": "2e372ae0-40a8-465d-a3ab-a43728d6692e",
+      "name": "Is Lead Qualified?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{$json.id}}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "industry",
+              "fieldValue": "={{$json.industry}}"
+            },
+            {
+              "fieldId": "business_type",
+              "fieldValue": "={{$json.business_type}}"
+            },
+            {
+              "fieldId": "recommended_service",
+              "fieldValue": "={{$json.recommended_service}}"
+            },
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "={{$json.lead_score}}"
+            },
+            {
+              "fieldId": "priority",
+              "fieldValue": "={{$json.priority}}"
+            },
+            {
+              "fieldId": "ai_confidence",
+              "fieldValue": "={{$json.ai_confidence}}"
+            },
+            {
+              "fieldId": "qualification_status",
+              "fieldValue": "QUALIFIED"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        -672
+      ],
+      "id": "8531124d-5aa4-44af-84ce-4e59e107e788",
+      "name": "Update Qualified Lead"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{$json.id}}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "industry",
+              "fieldValue": "={{$json.industry}}"
+            },
+            {
+              "fieldId": "business_type",
+              "fieldValue": "={{$json.business_type}}"
+            },
+            {
+              "fieldId": "recommended_service",
+              "fieldValue": "={{$json.recommended_service}}"
+            },
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "={{$json.lead_score}}"
+            },
+            {
+              "fieldId": "priority",
+              "fieldValue": "={{$json.priority}}"
+            },
+            {
+              "fieldId": "ai_confidence",
+              "fieldValue": "={{$json.ai_confidence}}"
+            },
+            {
+              "fieldId": "qualification_status",
+              "fieldValue": "NOT_QUALIFIED"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        -480
+      ],
+      "id": "05d98c27-34b8-47da-a7b5-ffc65a583288",
+      "name": "Update Not Qualified Lead"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{$json.id}}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "industry",
+              "fieldValue": "={{$json.industry}}"
+            },
+            {
+              "fieldId": "business_type",
+              "fieldValue": "={{$json.business_type}}"
+            },
+            {
+              "fieldId": "recommended_service",
+              "fieldValue": "={{$json.recommended_service}}"
+            },
+            {
+              "fieldId": "ai_confidence",
+              "fieldValue": "={{$json.ai_confidence}}"
+            },
+            {
+              "fieldId": "priority",
+              "fieldValue": "REVIEW"
+            },
+            {
+              "fieldId": "qualification_status",
+              "fieldValue": "NEEDS_REVIEW"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3408,
+        -288
+      ],
+      "id": "7552399e-5ac1-4e16-bb37-2e6768167e62",
+      "name": "Update Needs Review Lead"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "DUPLICATE_DETECTED"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{$json.lead_id}}"
+            },
+            {
+              "fieldId": "existing_lead_id",
+              "fieldValue": "={{$json.existing_lead_id}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{$json.email}}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{$json.company}}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{$json.run_mode}}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  duplicate_status: $json.duplicate_status,\n  duplicate_match_type: $json.duplicate_match_type,\n  normalized_email: $json.normalized_email,\n  lead_id_dedupe_key: $json.lead_id_dedupe_key,\n  company_website_dedupe_key: $json.company_website_dedupe_key\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        -160
+      ],
+      "id": "588fe62d-434d-4ed5-9355-94ea76f534b1",
+      "name": "Log Duplicate Lead Event"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "LEAD_QUALIFIED"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{$json.lead_id}}"
+            },
+            {
+              "fieldId": "existing_lead_id",
+              "fieldValue": "={{$json.id}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{$json.email}}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{$json.company}}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{$json.run_mode}}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  lead_score: $json.lead_score,\n  priority: $json.priority,\n  industry: $json.industry,\n  business_type: $json.business_type,\n  recommended_service: $json.recommended_service,\n  ai_confidence: $json.ai_confidence\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4048,
+        -672
+      ],
+      "id": "826dadd8-eb89-42ec-b799-488b37003773",
+      "name": "Log Qualified Lead Event"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "LEAD_NOT_QUALIFIED"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{$json.lead_id}}"
+            },
+            {
+              "fieldId": "existing_lead_id",
+              "fieldValue": "={{$json.id}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{$json.email}}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{$json.company}}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{$json.run_mode}}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  lead_score: $json.lead_score,\n  priority: $json.priority,\n  industry: $json.industry,\n  business_type: $json.business_type,\n  recommended_service: $json.recommended_service,\n  ai_confidence: $json.ai_confidence\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4048,
+        -480
+      ],
+      "id": "e27cb9b2-8bfa-4429-ba20-4b72695bc7aa",
+      "name": "Log Not Qualified Lead Event"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "LEAD_NEEDS_REVIEW"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{$json.lead_id}}"
+            },
+            {
+              "fieldId": "existing_lead_id",
+              "fieldValue": "={{$json.id}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{$json.email}}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{$json.company}}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{$json.run_mode}}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  priority: $json.priority,\n  industry: $json.industry,\n  business_type: $json.business_type,\n  recommended_service: $json.recommended_service,\n  ai_confidence: $json.ai_confidence,\n  confidence_threshold:\n    $('Normalize AI Enrichment').first().json.ai_confidence_threshold\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3616,
+        -288
+      ],
+      "id": "0da37654-3cda-4c2c-acec-a53b0d69e1c1",
+      "name": "Log Needs Review Lead Event"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "LEAD_INVALID"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{$json.lead_id}}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{$json.email}}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{$json.company}}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{$json.run_mode}}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  validation_status: $json.validation_status,\n  priority: 'REVIEW',\n  reason: $json.validation_errors\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        880,
+        128
+      ],
+      "id": "1da37c9e-1b70-4095-a0c0-5019cf97f27d",
+      "name": "Log Invalid Lead Event"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL@example.com",
+        "subject": "={{ `Qualified Lead: ${$json.company} | Score ${$json.details.lead_score}` }}",
+        "emailType": "text",
+        "message": "={{ `NEW QUALIFIED LEAD\n\nName: ${$json.incoming_lead_id}\nCompany: ${$json.company}\nEmail: ${$json.email}\n\nIndustry: ${$json.details.industry}\nBusiness Type: ${$json.details.business_type}\nRecommended Service: ${$json.details.recommended_service}\n\nLead Score: ${$json.details.lead_score}/100\nPriority: ${$json.details.priority}\nAI Confidence: ${Math.round($json.details.ai_confidence * 100)}%\n\nCRM Lead ID: ${$json.existing_lead_id}\nRun Mode: ${$json.run_mode}\n\nNotification Time: ${$now.setZone('Asia/Manila').toFormat('MM/dd/yyyy hh:mm a')}` }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4256,
+        -672
+      ],
+      "id": "bb79b956-0b6c-4fe9-9115-3c030a48e567",
+      "name": "Send Qualified Lead Email"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL@example.com",
+        "subject": "={{ `[${$json.run_mode}] Lead Needs Review: ${$json.company}` }}",
+        "emailType": "text",
+        "message": "={{ `LEAD NEEDS MANUAL REVIEW\n\nLead ID: ${$json.incoming_lead_id}\nCompany: ${$json.company}\nEmail: ${$json.email}\n\nIndustry: ${$json.details.industry}\nBusiness Type: ${$json.details.business_type}\nRecommended Service: ${$json.details.recommended_service}\n\nPriority: ${$json.details.priority}\nAI Confidence: ${Math.round($json.details.ai_confidence * 100)}%\nRequired Confidence: ${Math.round($json.details.confidence_threshold * 100)}%\n\nCRM Record ID: ${$json.existing_lead_id}\nRun Mode: ${$json.run_mode}\n\nReason:\nThe AI enrichment confidence was below the configured threshold, so this lead requires human review.\n\nNotification Time: ${$now.setZone('Asia/Manila').toFormat('MM/dd/yyyy hh:mm a')}` }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3824,
+        -288
+      ],
+      "id": "6c604887-7c68-428f-b2d9-b44f9853fc80",
+      "name": "Send Needs Review Email"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Create New Lead Record').first().json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "qualification_status",
+              "fieldValue": "NEEDS_REVIEW"
+            },
+            {
+              "fieldId": "priority",
+              "fieldValue": "REVIEW"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        -80
+      ],
+      "id": "affdb658-bd5d-48b5-b88c-601f59681b26",
+      "name": "Update Website Fetch Failed Lead"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "WEBSITE_FETCH_FAILED"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.lead_id }}"
+            },
+            {
+              "fieldId": "existing_lead_id",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.id }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.email }}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.company }}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.run_mode }}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  qualification_status: 'NEEDS_REVIEW',\n  priority: 'REVIEW',\n  failed_node: 'Fetch Company Website',\n  error_message:\n    $('Fetch Company Website').first().json.error?.message ||\n    $('Fetch Company Website').first().json.message ||\n    'Website fetch failed',\n  error_code:\n    $('Fetch Company Website').first().json.error?.code ||\n    $('Fetch Company Website').first().json.code ||\n    null\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2416,
+        -80
+      ],
+      "id": "a738e58d-8b09-4f0c-ab6a-d37512498ad3",
+      "name": "Log Website Fetch Failed Event"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL@example.com",
+        "subject": "={{ `[${$json.run_mode}] Website Fetch Failed: ${$json.company}` }}",
+        "emailType": "text",
+        "message": "={{ `WEBSITE FETCH FAILED\n\nLead ID: ${$json.incoming_lead_id}\nCompany: ${$json.company}\nEmail: ${$json.email}\n\nCRM Record ID: ${$json.existing_lead_id}\nRun Mode: ${$json.run_mode}\n\nFailure Details:\nNode: ${$json.details.failed_node}\nError Code: ${$json.details.error_code || 'N/A'}\nError Message: ${$json.details.error_message}\n\nCRM Status:\nQualification Status: ${$json.details.qualification_status}\nPriority: ${$json.details.priority}\n\nAction Required:\nThe company website could not be reached, so AI enrichment was skipped.\nPlease review the lead manually and verify the website URL.\n\nNotification Time: ${$now.setZone('Asia/Manila').toFormat('MM/dd/yyyy hh:mm a')}` }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2624,
+        -80
+      ],
+      "id": "576683b8-3ac4-46b2-bca3-f8c1fbca34bf",
+      "name": "Send Website Fetch Failed Email"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Create New Lead Record').first().json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "qualification_status",
+              "fieldValue": "NEEDS_REVIEW"
+            },
+            {
+              "fieldId": "priority",
+              "fieldValue": "REVIEW"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2992,
+        -80
+      ],
+      "id": "287b9611-4df8-4d54-850b-a7d49820590c",
+      "name": "Update AI Enrichment Failed Lead"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "AI_ENRICHMENT_FAILED"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.lead_id }}"
+            },
+            {
+              "fieldId": "existing_lead_id",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.id }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.email }}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.company }}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{ $('Create New Lead Record').first().json.run_mode }}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  qualification_status: 'NEEDS_REVIEW',\n  priority: 'REVIEW',\n  failed_node: 'AI Enrich Lead',\n  error_message:\n    $('AI Enrich Lead').first().json.error?.message ||\n    $('AI Enrich Lead').first().json.message ||\n    'AI enrichment failed',\n  error_code:\n    $('AI Enrich Lead').first().json.error?.code ||\n    $('AI Enrich Lead').first().json.code ||\n    null\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        -80
+      ],
+      "id": "9cf09d06-cfd0-4f15-adc6-7510e6c70b9a",
+      "name": "Log AI Enrichment Failed Event"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL@example.com",
+        "subject": "={{ `[${$json.run_mode}] AI Enrichment Failed: ${$json.company}` }}",
+        "emailType": "text",
+        "message": "={{ `AI ENRICHMENT FAILED\n\nLead ID: ${$json.incoming_lead_id}\nCompany: ${$json.company}\nEmail: ${$json.email}\n\nCRM Record ID: ${$json.existing_lead_id}\nRun Mode: ${$json.run_mode}\n\nFailure Details:\nNode: ${$json.details.failed_node}\nError Code: ${$json.details.error_code || 'N/A'}\nError Message: ${$json.details.error_message}\n\nCRM Status:\nQualification Status: ${$json.details.qualification_status}\nPriority: ${$json.details.priority}\n\nAction Required:\nAI enrichment could not be completed.\nPlease review this lead manually and retry enrichment if appropriate.\n\nNotification Time: ${$now.setZone('Asia/Manila').toFormat('MM/dd/yyyy hh:mm a')}` }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3408,
+        -80
+      ],
+      "id": "d38db619-f4d9-4f66-bed8-1070cb4071c4",
+      "name": "Send AI Enrichment Failed Email"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2832,
+        -64
+      ],
+      "id": "abf0422b-abf9-4cce-9600-8601f3b95eb1",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -192,
+        160
+      ],
+      "id": "8a9cbfcb-e4d1-4db9-8567-0e618f3b261b",
+      "name": "Lead Intake Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e769127e-bd18-4a00-87c1-5b8b2f5af64b",
+              "name": "run_mode",
+              "value": "PRODUCTION",
+              "type": "string"
+            },
+            {
+              "id": "32027884-c54f-4c22-a624-7eccfe4389dd",
+              "name": "lead_score_threshold",
+              "value": 70,
+              "type": "number"
+            },
+            {
+              "id": "e1405bfa-3caa-4ef3-be2a-fb1d8824c11d",
+              "name": "ai_confidence_threshold",
+              "value": 0.75,
+              "type": "number"
+            },
+            {
+              "id": "6f75c737-3fc3-476e-b7d6-80744e639421",
+              "name": "source",
+              "value": "WEBHOOK",
+              "type": "string"
+            },
+            {
+              "id": "5df2ff72-17b7-40e9-b34c-fd96611145bf",
+              "name": "workflow_version",
+              "value": "1.0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        160
+      ],
+      "id": "48cc4aa6-b3ec-4d3d-9ead-da2d452c9809",
+      "name": "Production Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json;\n\n\n// =========================================\n// GET ORIGINAL WEBHOOK DATA\n// =========================================\n\nconst webhookData =\n  $('Lead Intake Webhook')\n    .first()\n    .json;\n\n\n// =========================================\n// GET WEBHOOK BODY\n// =========================================\n\nconst body =\n  webhookData.body &&\n  typeof webhookData.body === 'object'\n    ? webhookData.body\n    : {};\n\n\n// =========================================\n// DETERMINE RUN MODE\n// =========================================\n\n// n8n webhook-test URL:\n// executionMode = \"test\"\n//\n// Active production webhook:\n// executionMode = \"production\"\n\nconst executionMode =\n  String(\n    webhookData.executionMode || ''\n  )\n    .trim()\n    .toLowerCase();\n\nconst runMode =\n  executionMode === 'test'\n    ? 'TEST'\n    : 'PRODUCTION';\n\n\n// =========================================\n// NORMALIZE INCOMING LEAD\n// =========================================\n\nconst leadId =\n  String(body.lead_id || '')\n    .trim();\n\nconst firstName =\n  String(body.first_name || '')\n    .trim();\n\nconst lastName =\n  String(body.last_name || '')\n    .trim();\n\nconst email =\n  String(body.email || '')\n    .trim()\n    .toLowerCase();\n\nconst company =\n  String(body.company || '')\n    .trim();\n\nconst website =\n  String(body.website || '')\n    .trim();\n\nconst jobTitle =\n  String(body.job_title || '')\n    .trim();\n\nconst city =\n  String(body.city || '')\n    .trim();\n\nconst country =\n  String(body.country || '')\n    .trim();\n\nconst leadSource =\n  String(\n    body.lead_source ||\n    input.source ||\n    'WEBHOOK'\n  ).trim();\n\n\n// =========================================\n// CONFIG VALUES\n// =========================================\n\nconst leadScoreThreshold =\n  Number(\n    input.lead_score_threshold || 70\n  );\n\nconst aiConfidenceThreshold =\n  Number(\n    input.ai_confidence_threshold || 0.75\n  );\n\nconst source =\n  String(\n    input.source ||\n    'WEBHOOK'\n  ).trim();\n\nconst workflowVersion =\n  String(\n    input.workflow_version ||\n    '1.0'\n  ).trim();\n\n\n// =========================================\n// OUTPUT STANDARD LEAD FORMAT\n// =========================================\n\nreturn {\n  json: {\n\n    run_mode:\n      runMode,\n\n    lead_score_threshold:\n      leadScoreThreshold,\n\n    ai_confidence_threshold:\n      aiConfidenceThreshold,\n\n    source:\n      source,\n\n    workflow_version:\n      workflowVersion,\n\n    lead_id:\n      leadId,\n\n    first_name:\n      firstName,\n\n    last_name:\n      lastName,\n\n    email:\n      email,\n\n    company:\n      company,\n\n    website:\n      website,\n\n    job_title:\n      jobTitle,\n\n    city:\n      city,\n\n    country:\n      country,\n\n    lead_source:\n      leadSource\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        160
+      ],
+      "id": "7f85fe13-f849-4bd2-86e3-b6f2d8e77fdb",
+      "name": "Prepare Webhook Lead"
+    },
+    {
+      "parameters": {
+        "jsCode": "const errorOutput = $json;\n\nconst lead =\n  $('Prepare Lead for Deduplication')\n    .first()\n    .json;\n\n\n// =========================================\n// SAFE TEXT CONVERSION\n// =========================================\n\nfunction toText(value) {\n\n  if (\n    value === undefined ||\n    value === null\n  ) {\n    return '';\n  }\n\n  if (typeof value === 'string') {\n    return value.trim();\n  }\n\n  try {\n    return JSON.stringify(value);\n  }\n\n  catch {\n    return String(value);\n  }\n\n}\n\n\n// =========================================\n// COLLECT ALL TEXT FROM NESTED ERROR DATA\n// =========================================\n\nfunction collectStrings(\n  value,\n  results = [],\n  depth = 0\n) {\n\n  if (depth > 10) {\n    return results;\n  }\n\n  if (\n    value === undefined ||\n    value === null\n  ) {\n    return results;\n  }\n\n  if (typeof value === 'string') {\n\n    const text =\n      value.trim();\n\n    if (text) {\n      results.push(text);\n    }\n\n    return results;\n  }\n\n  if (\n    typeof value === 'number' ||\n    typeof value === 'boolean'\n  ) {\n\n    results.push(\n      String(value)\n    );\n\n    return results;\n  }\n\n  if (Array.isArray(value)) {\n\n    for (const item of value) {\n\n      collectStrings(\n        item,\n        results,\n        depth + 1\n      );\n\n    }\n\n    return results;\n  }\n\n  if (typeof value === 'object') {\n\n    for (\n      const [key, item]\n      of Object.entries(value)\n    ) {\n\n      // Include useful property names too\n      results.push(\n        `${key}`\n      );\n\n      collectStrings(\n        item,\n        results,\n        depth + 1\n      );\n\n    }\n\n  }\n\n  return results;\n}\n\n\n// =========================================\n// RAW ERROR PAYLOAD\n// =========================================\n\nlet rawErrorPayload;\n\ntry {\n\n  rawErrorPayload =\n    JSON.stringify(\n      errorOutput,\n      null,\n      2\n    );\n\n}\n\ncatch {\n\n  rawErrorPayload =\n    String(errorOutput);\n\n}\n\n\n// Prevent audit logs from becoming enormous\n\nrawErrorPayload =\n  rawErrorPayload.slice(\n    0,\n    6000\n  );\n\n\n// =========================================\n// SEARCH ALL NESTED VALUES\n// =========================================\n\nconst collectedStrings =\n  collectStrings(errorOutput);\n\nconst combinedErrorText =\n  collectedStrings\n    .join(' | ')\n    .toLowerCase();\n\n\n// =========================================\n// FIND POSTGRES / SUPABASE ERROR CODE\n// =========================================\n\nlet errorCode = null;\n\nconst postgresCodeMatch =\n  combinedErrorText.match(\n    /\\b\\d{5}\\b/\n  );\n\nif (postgresCodeMatch) {\n\n  errorCode =\n    postgresCodeMatch[0];\n\n}\n\n\n// =========================================\n// DETECT UNIQUE CONSTRAINT CONFLICT\n// =========================================\n\n// PostgreSQL:\n// 23505 = unique_violation\n\nconst isUniqueConflict =\n  errorCode === '23505' ||\n  combinedErrorText.includes('23505') ||\n  combinedErrorText.includes('duplicate key') ||\n  combinedErrorText.includes('unique constraint') ||\n  combinedErrorText.includes('violates unique') ||\n  combinedErrorText.includes('unique violation');\n\n\n// =========================================\n// FIND BEST HUMAN-READABLE MESSAGE\n// =========================================\n\nconst preferredPatterns = [\n  'invalid input syntax',\n  'duplicate key',\n  'violates unique',\n  'unique constraint',\n  'bad request',\n  'not-null constraint',\n  'foreign key constraint',\n  'permission denied',\n  'row-level security'\n];\n\nlet errorMessage = '';\n\nfor (const pattern of preferredPatterns) {\n\n  const match =\n    collectedStrings.find(\n      value =>\n        String(value)\n          .toLowerCase()\n          .includes(pattern)\n    );\n\n  if (match) {\n\n    errorMessage =\n      String(match);\n\n    break;\n  }\n\n}\n\n\n// Fall back to likely message properties\n\nif (!errorMessage) {\n\n  errorMessage =\n    toText(\n      errorOutput.error?.message ||\n      errorOutput.errorMessage ||\n      errorOutput.message ||\n      errorOutput.errorDescription ||\n      errorOutput.description\n    );\n\n}\n\n\n// Final fallback\n\nif (!errorMessage) {\n\n  errorMessage =\n    'Lead creation failed';\n\n}\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...lead,\n\n    lead_create_failed:\n      true,\n\n    is_unique_conflict:\n      isUniqueConflict,\n\n    error_code:\n      errorCode,\n\n    error_message:\n      errorMessage,\n\n    failed_node:\n      'Create New Lead Record',\n\n    raw_error_payload:\n      rawErrorPayload\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        160
+      ],
+      "id": "f303f31d-916b-4866-bbaa-f46a26f49b22",
+      "name": "Classify Lead Create Error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "267e4f74-6476-43e9-96ab-3324cce0b8d6",
+              "leftValue": "={{$json.is_unique_conflict}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2224,
+        160
+      ],
+      "id": "d537b4f0-c740-4f3c-b1e2-8523f664f46d",
+      "name": "Is Unique Conflict?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "leads",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lead_id_dedupe_key",
+              "condition": "eq",
+              "keyValue": "={{$json.lead_id_dedupe_key}}"
+            },
+            {
+              "keyName": "email_dedupe_key",
+              "condition": "eq",
+              "keyValue": "={{$json.email_dedupe_key}}"
+            },
+            {
+              "keyName": "company_website_dedupe_key",
+              "condition": "eq",
+              "keyValue": "={{$json.company_website_dedupe_key}}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        144
+      ],
+      "id": "43a05049-8a0f-451a-a3f1-1368bf2aa22c",
+      "name": "Recover Existing Lead",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const recoveredLead = $json;\n\nconst incomingLead =\n  $('Classify Lead Create Error')\n    .first()\n    .json;\n\n\n// =========================================\n// DID WE RECOVER THE EXISTING ROW?\n// =========================================\n\nconst recovered =\n  recoveredLead.id !== undefined &&\n  recoveredLead.id !== null;\n\n\n// =========================================\n// DETERMINE WHICH KEY MATCHED\n// =========================================\n\nlet duplicateMatchType = null;\n\nif (recovered) {\n\n  if (\n    recoveredLead.lead_id_dedupe_key &&\n    recoveredLead.lead_id_dedupe_key ===\n      incomingLead.lead_id_dedupe_key\n  ) {\n    duplicateMatchType =\n      'LEAD_ID';\n  }\n\n  else if (\n    recoveredLead.email_dedupe_key &&\n    recoveredLead.email_dedupe_key ===\n      incomingLead.email_dedupe_key\n  ) {\n    duplicateMatchType =\n      'EMAIL';\n  }\n\n  else if (\n    recoveredLead.company_website_dedupe_key &&\n    recoveredLead.company_website_dedupe_key ===\n      incomingLead.company_website_dedupe_key\n  ) {\n    duplicateMatchType =\n      'COMPANY_WEBSITE';\n  }\n\n  else {\n    duplicateMatchType =\n      'UNKNOWN';\n  }\n\n}\n\n\n// =========================================\n// OUTPUT\n// =========================================\n\nreturn {\n  json: {\n    ...incomingLead,\n\n    duplicate_found:\n      recovered,\n\n    duplicate_status:\n      recovered\n        ? 'DUPLICATE'\n        : 'RECOVERY_FAILED',\n\n    duplicate_match_type:\n      duplicateMatchType,\n\n    existing_lead_id:\n      recovered\n        ? recoveredLead.id\n        : null,\n\n    duplicate_recovery:\n      recovered\n        ? 'SUCCESS'\n        : 'FAILED'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2656,
+        144
+      ],
+      "id": "1bb9410b-17d3-46bc-a4e7-f9729e87f1f1",
+      "name": "Evaluate Recovered Duplicate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b166db1e-55f4-4bdc-9851-2289b17aa77d",
+              "leftValue": "={{$json.duplicate_found}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2864,
+        144
+      ],
+      "id": "433a2469-501d-4782-bbce-d8f7af2f9442",
+      "name": "Was Duplicate Recovered?"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_ALERT_EMAIL@example.com",
+        "subject": "={{ `[${$json.run_mode}] Lead Creation Failed: ${$json.company}` }}",
+        "emailType": "text",
+        "message": "={{ `LEAD CREATION FAILED\n\nLead ID: ${$json.incoming_lead_id}\nCompany: ${$json.company}\nEmail: ${$json.email}\n\nRun Mode: ${$json.run_mode}\n\nFailure Details:\nNode: ${$json.details.failed_node}\nError Code: ${$json.details.error_code || 'N/A'}\nError Message: ${$json.details.error_message}\n\nUnique Conflict:\n${$json.details.is_unique_conflict ?? 'N/A'}\n\nDuplicate Recovery:\n${$json.details.duplicate_recovery || 'N/A'}\n\nDeduplication Keys:\nLead ID Key: ${$json.details.lead_id_dedupe_key || 'N/A'}\nEmail Key: ${$json.details.email_dedupe_key || 'N/A'}\nCompany + Website Key: ${$json.details.company_website_dedupe_key || 'N/A'}\n\nAction Required:\nThe lead could not be created in the CRM database.\nReview the n8n execution and Supabase error before retrying the lead.\n\nNotification Time: ${$now.setZone('Asia/Manila').toFormat('MM/dd/yyyy hh:mm a')}` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2656,
+        368
+      ],
+      "id": "ca2da193-4869-4aeb-bd14-1ac099dd396e",
+      "name": "Send Lead Create Failed Email"
+    },
+    {
+      "parameters": {
+        "tableId": "lead_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "event_type",
+              "fieldValue": "LEAD_CREATE_FAILED"
+            },
+            {
+              "fieldId": "incoming_lead_id",
+              "fieldValue": "={{ $json.lead_id }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldId": "company",
+              "fieldValue": "={{ $json.company }}"
+            },
+            {
+              "fieldId": "run_mode",
+              "fieldValue": "={{ $json.run_mode }}"
+            },
+            {
+              "fieldId": "details",
+              "fieldValue": "={{ {\n  failed_node: 'Create New Lead Record',\n  error_code: $json.error_code || null,\n  error_message: $json.error_message || 'Lead creation failed',\n  is_unique_conflict: $json.is_unique_conflict ?? null,\n  duplicate_recovery: $json.duplicate_recovery || null,\n  lead_id_dedupe_key: $json.lead_id_dedupe_key,\n  email_dedupe_key: $json.email_dedupe_key,\n  company_website_dedupe_key: $json.company_website_dedupe_key\n} }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        368
+      ],
+      "id": "c517ecac-4a6b-4d60-8643-cc9eb4682e9c",
+      "name": "Log Lead Create Failed Event"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Test Run": {
+      "main": [
+        [
+          {
+            "node": "Workflow Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Config": {
+      "main": [
+        [
+          {
+            "node": "Create Test Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Test Lead": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Lead Input": {
+      "main": [
+        [
+          {
+            "node": "Is Lead Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Lead Valid?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Lead for Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Invalid Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Lead for Deduplication": {
+      "main": [
+        [
+          {
+            "node": "Check Existing Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Duplicate Result": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Log Duplicate Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Existing Lead": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Duplicate Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Lead Record": {
+      "main": [
+        [
+          {
+            "node": "Fetch Company Website",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify Lead Create Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Company Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Website Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Website Fetch Failed Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Website Text": {
+      "main": [
+        [
+          {
+            "node": "Prepare Enrichment Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Enrichment Context": {
+      "main": [
+        [
+          {
+            "node": "AI Enrich Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Enrich Lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize AI Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update AI Enrichment Failed Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize AI Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Is AI Confidence Sufficient?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is AI Confidence Sufficient?": {
+      "main": [
+        [
+          {
+            "node": "Calculate Lead Score",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Needs Review Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Lead Score": {
+      "main": [
+        [
+          {
+            "node": "Is Lead Qualified?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Lead Qualified?": {
+      "main": [
+        [
+          {
+            "node": "Update Qualified Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Not Qualified Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Qualified Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Qualified Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Not Qualified Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Not Qualified Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Needs Review Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Needs Review Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Qualified Lead Event": {
+      "main": [
+        [
+          {
+            "node": "Send Qualified Lead Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Needs Review Lead Event": {
+      "main": [
+        [
+          {
+            "node": "Send Needs Review Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Website Fetch Failed Lead": {
+      "main": [
+        [
+          {
+            "node": "Log Website Fetch Failed Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Website Fetch Failed Event": {
+      "main": [
+        [
+          {
+            "node": "Send Website Fetch Failed Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update AI Enrichment Failed Lead": {
+      "main": [
+        [
+          {
+            "node": "Log AI Enrichment Failed Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log AI Enrichment Failed Event": {
+      "main": [
+        [
+          {
+            "node": "Send AI Enrichment Failed Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Enrich Lead",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Production Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Production Config": {
+      "main": [
+        [
+          {
+            "node": "Prepare Webhook Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Webhook Lead": {
+      "main": [
+        [
+          {
+            "node": "Validate Lead Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Lead Create Error": {
+      "main": [
+        [
+          {
+            "node": "Is Unique Conflict?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Unique Conflict?": {
+      "main": [
+        [
+          {
+            "node": "Recover Existing Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Lead Create Failed Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recover Existing Lead": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Recovered Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Recovered Duplicate": {
+      "main": [
+        [
+          {
+            "node": "Was Duplicate Recovered?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Was Duplicate Recovered?": {
+      "main": [
+        [
+          {
+            "node": "Log Duplicate Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Lead Create Failed Event": {
+      "main": [
+        [
+          {
+            "node": "Send Lead Create Failed Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "tags": []
+}
